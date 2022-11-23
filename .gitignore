@@ -24,6 +24,11 @@ examples/**/remote/*prm20151026t173213_post*.txt
 examples/**/remote/*prm20151026t173213_rfl*.txt
 examples/**/remote/*.mat
 examples/**/images/*.png
+examples/**/*.npy
+examples/**/configs/*.mat
+examples/image_cube/medium_chunk/*
+examples/image_cube/small_chunk/*
+examples/image_cube/test_data.zip
 
 # Ignore test, build and distribution files
 build/
