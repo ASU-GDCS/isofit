@@ -47,7 +47,7 @@ def main(rawargs=None):
             to-sun zenith, phase, slope, aspect, cosine i, UTC time) [expected ENVI format]
         working_directory (str): directory to stage multiple outputs, will contain subdirectories
         sensor (str): the sensor used for acquisition, will be used to set noise and datetime settings.  choices are:
-            [ang, avcl, neon, prism]
+            [ang, avcl, neon, prism, gao]
         copy_input_files (Optional, int): flag to choose to copy input_radiance, input_loc, and input_obs locally into
             the working_directory.  0 for no, 1 for yes.  Default 0
         modtran_path (Optional, str): Location of MODTRAN utility, alternately set with MODTRAN_DIR environment variable
@@ -136,10 +136,10 @@ def main(rawargs=None):
 
     use_superpixels = ((args.empirical_line == 1) or (args.analytical_line == 1))
 
-    if args.sensor not in ['ang', 'avcl', 'neon', 'prism', 'emit', 'hyp']:
+    if args.sensor not in ['gao', 'ang', 'avcl', 'neon', 'prism', 'emit', 'hyp']:
         if args.sensor[:3] != 'NA-':
             raise ValueError('argument sensor: invalid choice: "NA-test" (choose from '
-                             '"ang", "avcl", "neon", "prism", "emit", "NA-*")')
+                             '"gao", "ang", "avcl", "neon", "prism", "emit", "NA-*")')
 
     if args.copy_input_files == 1:
         args.copy_input_files = True
@@ -178,7 +178,9 @@ def main(rawargs=None):
 
     # Based on the sensor type, get appropriate year/month/day info fro intial condition.
     # We'll adjust for line length and UTC day overrun later
-    if args.sensor == 'ang':
+    if args.sensor == 'gao':
+        dt = datetime.strptime(paths.fid[3:-5], '%Y%m%dt%H%M%S')
+    elif args.sensor == 'ang':
         # parse flightline ID (AVIRIS-NG assumptions)
         dt = datetime.strptime(paths.fid[3:], '%Y%m%dt%H%M%S')
     elif args.sensor == 'avcl':
@@ -454,6 +456,9 @@ class Pathnames():
     def __init__(self, args: argparse.Namespace):
 
         # Determine FID based on sensor name
+        if args.sensor == 'gao':
+            self.fid = split(args.input_radiance)[-1][:23]
+            logging.info('Flightline ID: %s' % self.fid)
         if args.sensor == 'ang':
             self.fid = split(args.input_radiance)[-1][:18]
             logging.info('Flightline ID: %s' % self.fid)
@@ -1162,7 +1167,9 @@ def build_presolve_config(
     }
 
     if emulator_base is not None:
+        #radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_file'] = os.path.join(abspath(emulator_base),"saved_model.pb")
         radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_file'] = abspath(emulator_base)
+        #radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_aux_file'] = os.path.join(abspath(emulator_base),"sRTMnet_v100_aux.npz")
         radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_aux_file'] = abspath(os.path.splitext(emulator_base)[0] + '_aux.npz')
         radiative_transfer_config['radiative_transfer_engines']['vswir']['interpolator_base_path'] = abspath(os.path.join(paths.lut_h2o_directory,os.path.basename(emulator_base) + '_vi'))
         radiative_transfer_config['radiative_transfer_engines']['vswir']['earth_sun_distance_file'] = paths.earth_sun_distance_path
@@ -1326,7 +1333,9 @@ def build_main_config(
         }
 
     if emulator_base is not None:
+        #radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_file'] = os.path.join(abspath(emulator_base),"saved_model.pb")
         radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_file'] = abspath(emulator_base)
+        #radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_aux_file'] = os.path.join(abspath(emulator_base),"sRTMnet_v100_aux.npz")
         radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_aux_file'] = abspath(os.path.splitext(emulator_base)[0] + '_aux.npz')
         radiative_transfer_config['radiative_transfer_engines']['vswir']['interpolator_base_path'] = abspath(os.path.join(paths.lut_modtran_directory,os.path.basename(os.path.splitext(emulator_base)[0]) + '_vi'))
         radiative_transfer_config['radiative_transfer_engines']['vswir']['earth_sun_distance_file'] = paths.earth_sun_distance_path
