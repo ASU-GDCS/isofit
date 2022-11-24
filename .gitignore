@@ -29,6 +29,8 @@ examples/**/configs/*.mat
 examples/image_cube/medium_chunk/*
 examples/image_cube/small_chunk/*
 examples/image_cube/test_data.zip
+examples/image_cube/small_chunk_test_emulator/*
+examples/image_cube/small_chunk_test_modtran/*
 
 # Ignore test, build and distribution files
 build/
