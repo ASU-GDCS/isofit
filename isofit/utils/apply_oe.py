@@ -1167,9 +1167,7 @@ def build_presolve_config(
     }
 
     if emulator_base is not None:
-        #radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_file'] = os.path.join(abspath(emulator_base),"saved_model.pb")
         radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_file'] = abspath(emulator_base)
-        #radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_aux_file'] = os.path.join(abspath(emulator_base),"sRTMnet_v100_aux.npz")
         radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_aux_file'] = abspath(os.path.splitext(emulator_base)[0] + '_aux.npz')
         radiative_transfer_config['radiative_transfer_engines']['vswir']['interpolator_base_path'] = abspath(os.path.join(paths.lut_h2o_directory,os.path.basename(emulator_base) + '_vi'))
         radiative_transfer_config['radiative_transfer_engines']['vswir']['earth_sun_distance_file'] = paths.earth_sun_distance_path
@@ -1333,9 +1331,7 @@ def build_main_config(
         }
 
     if emulator_base is not None:
-        #radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_file'] = os.path.join(abspath(emulator_base),"saved_model.pb")
         radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_file'] = abspath(emulator_base)
-        #radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_aux_file'] = os.path.join(abspath(emulator_base),"sRTMnet_v100_aux.npz")
         radiative_transfer_config['radiative_transfer_engines']['vswir']['emulator_aux_file'] = abspath(os.path.splitext(emulator_base)[0] + '_aux.npz')
         radiative_transfer_config['radiative_transfer_engines']['vswir']['interpolator_base_path'] = abspath(os.path.join(paths.lut_modtran_directory,os.path.basename(os.path.splitext(emulator_base)[0]) + '_vi'))
         radiative_transfer_config['radiative_transfer_engines']['vswir']['earth_sun_distance_file'] = paths.earth_sun_distance_path
