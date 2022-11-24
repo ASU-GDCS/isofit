@@ -1,7 +1,9 @@
 
 # Download relevant datasets - unlike other examples, these datasets are too large to place in
-curl -O https://avng.jpl.nasa.gov/pub/PBrodrick/isofit/test_data.zip
-unzip test_data.zip
+if [ ! -e test_data.zip ] ; then
+    curl -O https://avng.jpl.nasa.gov/pub/PBrodrick/isofit/test_data.zip
+    unzip test_data.zip
+fi
 
 n_cores=4
 
