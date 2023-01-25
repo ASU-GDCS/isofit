@@ -73,7 +73,12 @@ def main(rawargs=None):
     # Determine FID based on sensor name
     # Based on the sensor type, get appropriate year/month/day info for initial condition.
     # We'll adjust for line length and UTC day overrun later
-    if opt["sensor"] == 'ang':
+    if opt["sensor"] == 'gao':
+        fid = os.path.split(args.input_radiance)[-1][:23]
+        logging.info('Flightline ID: %s' % fid)
+        # parse flightline ID (CAO/GAO assumptions)
+        dt = datetime.strptime(fid[3:-5], '%Y%m%dt%H%M%S')
+    elif opt["sensor"] == 'ang':
         fid = os.path.split(args.input_radiance)[-1][:18]
         logging.info('Flightline ID: %s' % fid)
         # parse flightline ID (AVIRIS-NG assumptions)
@@ -112,7 +117,7 @@ def main(rawargs=None):
     else:
         raise ValueError('Neither flight line ID nor datetime object could be obtained. '
                          'Please provide valid sensor name in config file '
-                         '(choose from "ang", "avcl", "prism", "neon", "emit", "NA-*", "hyp").')
+                         '(choose from "gao", "ang", "avcl", "prism", "neon", "emit", "NA-*", "hyp").')
 
     # get path names
     paths = Pathnames(opt=opt, gip=gip, args=args, fid=fid)
