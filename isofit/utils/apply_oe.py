@@ -562,7 +562,9 @@ class Pathnames():
              # isofit file should live at isofit/isofit/core/isofit.py
             self.isofit_path = os.path.dirname(os.path.dirname(os.path.dirname(isofit.__file__)))
 
-        if args.sensor == 'ang':
+        if args.sensor == 'gao':
+            self.noise_path = join(self.isofit_path, 'data', 'gao_2013_noise.txt')
+        elif args.sensor == 'ang':
             self.noise_path = join(self.isofit_path, 'data', 'avirisng_noise.txt')
         elif args.sensor == 'avcl':
             self.noise_path = join(self.isofit_path, 'data', 'avirisc_noise.txt')
