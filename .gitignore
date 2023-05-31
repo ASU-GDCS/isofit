@@ -24,6 +24,15 @@ examples/**/remote/*prm20151026t173213_rfl*.txt
 examples/**/remote/*.mat
 examples/**/images/*.png
 
+examples/**/*basic_surface.mat
+examples/**/medium_chunk/
+examples/**/medium_chunk_test_emulator/
+examples/**/small_chunk/
+examples/**/small_chunk_test_emulator/
+examples/**/small_chunk_test_modtran/
+examples/**/*solar_irr.npy
+examples/**/*test_data.zip
+
 # Ignore test, build and distribution files
 build/
 dist/*.whl
