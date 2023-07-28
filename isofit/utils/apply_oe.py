@@ -59,7 +59,7 @@ def apply_oe(args):
             to-sun zenith, phase, slope, aspect, cosine i, UTC time) [expected ENVI format]
         working_directory (str): directory to stage multiple outputs, will contain subdirectories
         sensor (str): the sensor used for acquisition, will be used to set noise and datetime settings.  choices are:
-            [gao, ang, avcl, neon, prism, gao]
+            [gao, ang, avcl, neon, prism]
         copy_input_files (Optional, int): flag to choose to copy input_radiance, input_loc, and input_obs locally into
             the working_directory.  0 for no, 1 for yes.  Default 0
         modtran_path (Optional, str): Location of MODTRAN utility, alternately set with MODTRAN_DIR environment variable
@@ -508,7 +508,9 @@ def apply_oe(args):
                 os.system(cmd)
 
     if not exists(paths.rfl_working_path) or not exists(paths.uncert_working_path):
-        if args.num_neighbors is None:
+        # Determine the number of neighbors to use.  Provides backwards stability and works
+        # well with defaults, but is arbitrary
+        if not args.num_neighbors:
             nneighbors = [int(round(3950 / 9 - 35 / 36 * args.segmentation_size))]
         else:
             nneighbors = args.num_neighbors
@@ -516,8 +518,6 @@ def apply_oe(args):
         if args.empirical_line == 1:
             # Empirical line
             logging.info("Empirical line inference")
-            # Determine the number of neighbors to use.  Provides backwards stability and works
-            # well with defaults, but is arbitrary
             empirical_line(
                 reference_radiance_file=paths.rdn_subs_path,
                 reference_reflectance_file=paths.rfl_subs_path,
@@ -533,26 +533,18 @@ def apply_oe(args):
             )
         elif args.analytical_line == 1:
             logging.info("Analytical line inference")
-            analytical_line_args = [
+            analytical_line(
                 paths.radiance_working_path,
                 paths.loc_working_path,
                 paths.obs_working_path,
                 args.working_directory,
-                "--output_rfl_file",
-                paths.rfl_working_path,
-                "--output_unc_file",
-                paths.uncert_working_path,
-                "--loglevel",
-                args.logging_level,
-                "--logfile",
-                args.log_file,
-                "--n_atm_neighbors",
-            ]
-            analytical_line_args.extend([str(x) for x in nneighbors])
-            analytical_line_args.append("--smoothing_sigma")
-            analytical_line_args.extend([str(x) for x in args.atm_sigma])
-
-            analytical_line.main(analytical_line_args)
+                output_rfl_file=paths.rfl_working_path,
+                output_unc_file=paths.uncert_working_path,
+                loglevel=args.logging_level,
+                logfile=args.log_file,
+                n_atm_neighbors=nneighbors,
+                smoothing_sigma=args.atm_sigma,
+            )
 
     logging.info("Done.")
 
@@ -1923,9 +1915,7 @@ def write_modtran_template(
 @click.argument("input_obs")
 @click.argument("working_directory")
 @click.argument("sensor")
-@click.option(
-    "--copy_input_files", type=int, default=0
-)  # ("--copy_input_files", is_flag=True, default=False)
+@click.option("--copy_input_files", type=int, default=0)
 @click.option("--modtran_path")
 @click.option("--wavelength_path")
 @click.option("--surface_category", default="multicomponent_surface")
@@ -1940,22 +1930,15 @@ def write_modtran_template(
 @click.option("--logging_level", default="INFO")
 @click.option("--log_file")
 @click.option("--n_cores", type=int, default=1)
-@click.option(
-    "--presolve", type=int, default=0
-)  # ("--presolve", is_flag=True, default=False)
-@click.option(
-    "--empirical_line", type=int, default=0
-)  # ("--empirical_line", is_flag=True, default=False)
-@click.option("--analytical_line", is_flag=True, default=False)
+@click.option("--presolve", type=int, default=0)
+@click.option("--empirical_line", type=int, default=0)
+@click.option("--analytical_line", type=int, default=0)
 @click.option("--ray_temp_dir", default="/tmp/ray")
-    #  "--ray_temp_dir", type=int, default=0
-#  )  # ("--ray_temp_dir", default="/tmp/ray")
 @click.option("--emulator_base")
 @click.option("--segmentation_size", default=40)
-@click.option("--num_neighbors")
-@click.option(
-    "--pressure_elevation", type=int, default=0
-)  # ("--pressure_elevation", is_flag=True)
+@click.option("--num_neighbors", "-nn", type=int, multiple=True)
+@click.option("--atm_sigma", "-as", type=float, multiple=True, default=[2])
+@click.option("--pressure_elevation", is_flag=True, default=False)
 @click.option(
     "--debug-args",
     help="Prints the arguments list without executing the command",
