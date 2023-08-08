@@ -377,6 +377,7 @@ def apply_oe(args):
 
         if args.emulator_base is None:
             max_water = calc_modtran_max_water(paths)
+            logging.info(f"max_water computed to be {max_water}")
         else:
             max_water = 6
 
@@ -433,6 +434,7 @@ def apply_oe(args):
 
         lut_params.h2o_range[0] = max(lut_params.h2o_min, p05 - margin)
         lut_params.h2o_range[1] = min(max_water, max(lut_params.h2o_min, p95 + margin))
+        ##Check for maximum
 
     h2o_lut_grid = lut_params.get_grid(
         lut_params.h2o_range[0],
@@ -1873,6 +1875,7 @@ def write_modtran_template(
                         "M5": atmosphere_type,
                         "M6": atmosphere_type,
                         "CO2MX": 410.0,
+                        "H2OOPT": "+",
                         "H2OSTR": 1.0,
                         "H2OUNIT": "g",
                         "O3STR": 0.3,
@@ -1897,7 +1900,7 @@ def write_modtran_template(
                         "SURFP": {"CSALB": "LAMB_CONST_0_PCT"},
                     },
                     "SPECTRAL": {
-                        "V1": 340.0,
+                        "V1": 330.0,
                         "V2": 2520.0,
                         "DV": 0.1,
                         "FWHM": 0.1,
@@ -1960,7 +1963,6 @@ def _cli(debug_args, **kwargs):
     """\
     Apply OE to a block of data
     """
-    click.echo("Running analytical line")
     if debug_args:
         click.echo("Arguments to be passed:")
         for key, value in kwargs.items():
