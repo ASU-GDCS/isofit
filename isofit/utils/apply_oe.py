@@ -123,7 +123,7 @@ def apply_oe(args):
         "hyp",
         "prisma",
         "av3",
-        "custom",
+        "custom"
     ]:
         if args.sensor[:3] != "NA-":
             raise ValueError(
@@ -214,11 +214,17 @@ def apply_oe(args):
         dt = datetime.strptime(args.sensor[3:], "%Y%m%d")
     elif args.sensor == "hyp":
         dt = datetime.strptime(paths.fid[10:17], "%Y%j")
+    elif args.sensor == "custom":
+        dt = datetime.strptime(args.dt, '%Y%m%d:%H%M%S')
     else:
         raise ValueError(
             "Datetime object could not be obtained. Please check file name of input"
             " data."
         )
+
+
+    if args.dt and args.sensor != "custom":
+        logging.warn("Ignoring dt argument because instrument is not 'custom'")
 
     dayofyear = dt.timetuple().tm_yday
 
@@ -598,6 +604,11 @@ class Pathnames:
             self.fid = os.path.splitext(os.path.basename(args.input_radiance))[0]
         elif args.sensor == "hyp":
             self.fid = split(args.input_radiance)[-1][:22]
+        elif args.sensor == "custom":
+            self.fid = args.fid
+
+        if args.fid and args.sensor != "custom":
+            logging.warn("Ignoring fid argument because instrument is not 'custom'")
 
         # Names from inputs
         self.aerosol_climatology = args.aerosol_climatology_path
@@ -1886,6 +1897,7 @@ def write_modtran_template(
                         "M5": atmosphere_type,
                         "M6": atmosphere_type,
                         "CO2MX": 410.0,
+                        "H2OOPT": "+",
                         "H2OSTR": 1.0,
                         "H2OUNIT": "g",
                         "O3STR": 0.3,
@@ -1952,6 +1964,8 @@ def write_modtran_template(
 @click.option("--multiple_restarts", is_flag=True, default=False)
 @click.option("--logging_level", default="INFO")
 @click.option("--log_file")
+@click.option("--fid",help="Flightline ID for 'custom' instrument setting")
+@click.option("--dt",help="Datetime string for 'custom' instrument in format '%Y%m%d:%H%M%S'")
 @click.option("--n_cores", type=int, default=1)
 @click.option("--presolve", type=int, default=0)
 @click.option("--empirical_line", type=int, default=0)
