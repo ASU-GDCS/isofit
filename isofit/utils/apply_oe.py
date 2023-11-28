@@ -59,7 +59,7 @@ def apply_oe(args):
             to-sun zenith, phase, slope, aspect, cosine i, UTC time) [expected ENVI format]
         working_directory (str): directory to stage multiple outputs, will contain subdirectories
         sensor (str): the sensor used for acquisition, will be used to set noise and datetime settings.  choices are:
-            [gao, ang, avcl, neon, prism, gao]
+            [gao, ang, avcl, neon, prism, custom]
         copy_input_files (Optional, int): flag to choose to copy input_radiance, input_loc, and input_obs locally into
             the working_directory.  0 for no, 1 for yes.  Default 0
         modtran_path (Optional, str): Location of MODTRAN utility, alternately set with MODTRAN_DIR environment variable
