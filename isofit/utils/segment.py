@@ -18,7 +18,6 @@
 # Author: David R Thompson, david.r.thompson@jpl.nasa.gov
 #
 
-import atexit
 import logging
 
 import numpy as np
@@ -28,7 +27,7 @@ from skimage.segmentation import slic
 from spectral.io import envi
 
 from isofit import ray
-from isofit.core.common import envi_header
+from isofit.core.common import envi_header, ray_initiate
 
 
 @ray.remote
@@ -208,8 +207,7 @@ def segment(
     if ray_ip_head is None and ray_redis_password is None:
         rayargs["num_cpus"] = n_cores
 
-    ray.init(**rayargs)
-    atexit.register(ray.shutdown)
+    ray_initiate(rayargs)
 
     # Iterate through image "chunks," segmenting as we go
     all_labels = np.zeros((nl, ns), dtype=np.int64)
@@ -254,7 +252,6 @@ def segment(
                 next_label += 1
             all_labels[lstart:lend, ...] = ordered_chunk_labels
     del rreturn
-    ray.shutdown()
 
     # Final file I/O
     logging.debug("Writing output")

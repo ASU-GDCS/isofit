@@ -12,9 +12,8 @@ $ python isofit.py ...
 Additionally, you may pass it as a temporary environment variable via:
 $ ISOFIT_DEBUG=1 python isofit.py ...
 """
-import logging
 
-import ray
+import logging
 
 Logger = logging.getLogger("isofit/wrappers/ray")
 

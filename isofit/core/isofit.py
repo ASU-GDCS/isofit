@@ -29,6 +29,7 @@ import numpy as np
 
 from isofit import ray
 from isofit.configs import configs
+from isofit.core.common import ray_initiate
 from isofit.core.fileio import IO
 from isofit.core.forward import ForwardModel
 from isofit.inversion.inverse import Inversion
@@ -84,15 +85,9 @@ class Isofit:
         ):
             rayargs["num_cpus"] = self.config.implementation.n_cores
 
-        ray.init(**rayargs)
+        ray_initiate(rayargs)
 
         self.workers = None
-
-    def __del__(self):
-        try:
-            ray.shutdown()
-        except:
-            return
 
     def run(self, row_column=None):
         """
@@ -113,7 +108,7 @@ class Isofit:
         """
 
         logging.info("Building first forward model, will generate any necessary LUTs")
-        fm = ForwardModel(self.config)
+        self.fm = fm = ForwardModel(self.config)
         if row_column is not None:
             ranges = row_column.split(",")
             if len(ranges) == 1:
@@ -145,16 +140,12 @@ class Isofit:
         # Max out the number of workers based on the number of tasks
         n_workers = min(n_workers, n_iter)
 
-        fm_id = ray.put(fm)
-
-        remote_worker = ray.remote(Worker)
+        params = [
+            ray.put(obj)
+            for obj in [self.config, fm, self.loglevel, self.logfile, n_workers]
+        ]
         self.workers = ray.util.ActorPool(
-            [
-                remote_worker.remote(
-                    self.config, fm_id, self.loglevel, self.logfile, n, n_workers
-                )
-                for n in range(n_workers)
-            ]
+            [Worker.remote(*params, n) for n in range(n_workers)]
         )
 
         start_time = time.time()
@@ -190,6 +181,7 @@ class Isofit:
         )
 
 
+@ray.remote(num_cpus=1)
 class Worker(object):
     def __init__(
         self,
@@ -197,8 +189,8 @@ class Worker(object):
         forward_model: ForwardModel,
         loglevel: str,
         logfile: str,
-        worker_id: int = None,
         total_workers: int = None,
+        worker_id: int = None,
     ):
         """
         Worker class to help run a subset of spectra.
@@ -260,13 +252,12 @@ class Worker(object):
                 try:
                     self.io.write_spectrum(row, col, states, self.fm, self.iv)
                 except ValueError as err:
-                    logging.info(
+                    logging.exception(
                         f"""
-                        Encountered the following ValueError in (row,col) ({row},{col}).
-                        Results for this pixel will be all zeros.
-                        """
+                    Encountered the following ValueError in (row,col) ({row},{col}).
+                    Results for this pixel will be all zeros.
+                    """
                     )
-                    logging.error(err)
 
                 if index % 100 == 0:
                     if (
@@ -284,11 +275,10 @@ class Worker(object):
                             f" {self.completed_spectra}/~{self.approximate_total_spectra}::"
                             f" {percent}% complete"
                         )
-                    else:
-                        logging.info(
-                            f"Worker at start location ({row},{col}) completed"
-                            f" {index}/{indices.shape[0]}"
-                        )
+        logging.info(
+            f"Worker at start location ({row},{col}) completed"
+            f" {index}/{indices.shape[0]}"
+        )
 
         self.io.flush_buffers()
 
@@ -304,21 +294,12 @@ class Worker(object):
     ),
     default="INFO",
 )
-def _cli(config_file, level):
-    """\
-    Executes ISOFIT core
-    """
+def cli_run(config_file, level):
+    """Execute ISOFIT core"""
+
     click.echo(f"Running ISOFIT(config_file={config_file!r}, level={level})")
 
     logging.basicConfig(format="%(message)s", level=level)
     Isofit(config_file=config_file, level=level).run()
 
     click.echo("Done")
-
-
-if __name__ == "__main__":
-    _cli()
-else:
-    from isofit import cli
-
-    cli.add_command(_cli)

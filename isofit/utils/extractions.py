@@ -18,14 +18,13 @@
 # Author: David R Thompson, david.r.thompson@jpl.nasa.gov
 #
 
-import atexit
 import logging
 
 import numpy as np
 from spectral.io import envi
 
 from isofit import ray
-from isofit.core.common import envi_header
+from isofit.core.common import envi_header, ray_initiate
 from isofit.core.fileio import write_bil_chunk
 
 
@@ -175,8 +174,7 @@ def extractions(
     if ray_ip_head is None and ray_redis_password is None:
         rayargs["num_cpus"] = n_cores
 
-    ray.init(**rayargs)
-    atexit.register(ray.shutdown)
+    ray_initiate(rayargs)
 
     labelid = ray.put(labels)
     jobs = []
@@ -197,7 +195,6 @@ def extractions(
         if ret is not None:
             out[idx, :, 0] = ret
     del rreturn
-    ray.shutdown()
 
     meta["lines"] = str(nout)
     meta["bands"] = str(nb)

@@ -18,24 +18,21 @@
 # Author: David R Thompson, david.r.thompson@jpl.nasa.gov
 #
 
-import atexit
 import logging
 import time
+from types import SimpleNamespace
 
-import matplotlib
+import click
 import numpy as np
-import pylab as plt
 from scipy.linalg import inv
 from scipy.spatial import KDTree
 from spectral.io import envi
 
 from isofit import ray
 from isofit.configs import configs
-from isofit.core.common import envi_header
+from isofit.core.common import envi_header, ray_initiate
 from isofit.core.fileio import write_bil_chunk
 from isofit.core.instrument import Instrument
-
-plt.switch_backend("Agg")
 
 
 @ray.remote
@@ -312,8 +309,6 @@ def _run_chunk(
                 output_uncertainty_row[col, :] = (
                     np.sqrt(np.diag(Sy) + pow(calunc * x, 2)) * bhat[:, 1]
                 )
-            # if loglevel == 'DEBUG':
-            #    plot_example(xv, yv, bhat)
 
             nspectra = nspectra + 1
 
@@ -350,30 +345,6 @@ def _run_chunk(
             row,
             (n_input_lines, n_output_uncertainty_bands, n_input_samples),
         )
-
-
-def _plot_example(xv, yv, b):
-    """Plot for debugging purposes."""
-
-    matplotlib.rcParams["font.family"] = "serif"
-    matplotlib.rcParams["font.sans-serif"] = "Times"
-    matplotlib.rcParams["legend.edgecolor"] = "None"
-    matplotlib.rcParams["axes.spines.top"] = False
-    matplotlib.rcParams["axes.spines.bottom"] = True
-    matplotlib.rcParams["axes.spines.left"] = True
-    matplotlib.rcParams["axes.spines.right"] = False
-    matplotlib.rcParams["axes.grid"] = True
-    matplotlib.rcParams["axes.grid.axis"] = "both"
-    matplotlib.rcParams["axes.grid.which"] = "major"
-    matplotlib.rcParams["legend.edgecolor"] = "1.0"
-    plt.plot(xv[:, 113], yv[:, 113], "ko")
-    plt.plot(xv[:, 113], xv[:, 113] * b[113, 1] + b[113, 0], "nneighbors")
-    # plt.plot(x[113], x[113]*b[113, 1] + b[113, 0], 'ro')
-    plt.grid(True)
-    plt.xlabel("Radiance, $\mu{W }nm^{-1} sr^{-1} cm^{-2}$")
-    plt.ylabel("Reflectance")
-    plt.show(block=True)
-    plt.savefig("empirical_line.pdf")
 
 
 def empirical_line(
@@ -552,8 +523,7 @@ def empirical_line(
     ):
         rayargs["num_cpus"] = n_cores
 
-    ray.init(**rayargs)
-    atexit.register(ray.shutdown)
+    ray_initiate(rayargs)
 
     n_ray_cores = ray.available_resources()["CPU"]
     n_cores = min(n_ray_cores, n_input_lines)
@@ -603,3 +573,29 @@ def empirical_line(
             line_sections[-1] * n_input_samples / total_time / n_cores,
         )
     )
+
+
+@click.command(name="empirical_line")
+@click.argument("reference_radiance_file", type=str)
+@click.argument("reference_reflectance_file", type=str)
+@click.argument("reference_uncertainty_file", type=str)
+@click.argument("reference_locations_file", type=str)
+@click.argument("segmentation_file", type=str)
+@click.argument("input_radiance_file", type=str)
+@click.argument("input_locations_file", type=str)
+@click.argument("output_reflectance_file", type=str)
+@click.argument("output_uncertainty_file", type=str)
+@click.option("--nneighbors", default=400, type=int, help="Number of neighbors")
+@click.option("--nodata_value", default=-9999.0, type=float, help="Nodata value")
+@click.option("--level", default="INFO", type=str, help="Logging level")
+@click.option("--logfile", default=None, type=str, help="Log file path")
+@click.option("--radiance_factors", default=None, type=str, help="Radiance factors")
+@click.option("--isofit_config", default=None, type=str, help="Isofit config")
+@click.option("--n_cores", default=-1, type=int, help="Number of cores")
+@click.option(
+    "--reference_class_file", default=None, type=str, help="Reference class file"
+)
+def cli_empirical_line(**kwargs):
+    """Run empirical line"""
+    empirical_line(SimpleNamespace(**kwargs))
+    click.echo("Done")

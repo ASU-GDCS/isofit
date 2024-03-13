@@ -21,7 +21,7 @@ examples/**/remote/*prm20151026t173213_data*.mat
 examples/**/remote/*prm20151026t173213_mdl*.txt
 examples/**/remote/*prm20151026t173213_post*.txt
 examples/**/remote/*prm20151026t173213_rfl*.txt
-examples/**/remote/*.mat
+examples/**/*.mat
 examples/**/images/*.png
 examples/**/*.npy
 examples/**/configs/*.mat
@@ -40,6 +40,7 @@ dist/*.whl
 .pytest_cache/
 isofit/test/output/*.txt
 tests/output/*.txt
+logs/
 
 # Ignore documentation files
 docs/_build/
@@ -47,3 +48,10 @@ docs/html/_sources/
 
 # Ignore local testing directories
 local/
+
+# Additional external libraries
+6sv-2.1/
+
+# Data dependencies
+sRTMnet_v100/
+hypertrace-data/

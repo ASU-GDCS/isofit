@@ -18,6 +18,9 @@ at the addresses given below, and we can coordinate efforts.  Our general policy
 is to for the maintainers to delegate technical authority to individuals to make
 changes and additions to specific topics.
 
+.. contents:: Table of Contents
+    :depth: 2
+
 
 Getting Started
 ---------------
@@ -44,14 +47,33 @@ example, if you are working on issue #314 you would run:
 
   git checkout -b 314-update-docs-libradtran
 
-Unit Tests
-----------
 
-Unit tests are implemented in the tests/ subdirectory, and use the pytest library.  You can run the tests from the base directory simply by running:
+Developer Environment
+---------------------
 
-.. code::
+Generally, the process for creating a Python virtual environment for development
+is:
 
-  pytest
+.. code-block:: console
+
+    $ python3 -m venv venv
+    $ ./scripts/setup-devenv.sh venv
+
+however, developers on some platforms may need to install additional non-Python
+dependencies using an appropriate package manager for their system.
+
+``setup-devenv.sh`` should be run periodically to refresh a development
+environment to pick up new dependencies, updates to the ``isofit`` build
+process, etc.
+
+
+Testing
+-------
+
+Tests live in `isofit/tests/ <isofit/tests/>`_, and are executed using
+`pytest <https://pytest.org>_`. Some tests require specific environment
+variables to be set, so the ``scripts/run-tests.sh`` script can be used to
+bridge the gap. It is a drop-in replacement for ``$ pytest``.
 
 Our development strategy employs continuous integration and unit testing to validate all changes.  We appreciate your writing additional tests for new modifications or features.  In the interest of validating your code, please also be sure to run realistic examples like this:
 
